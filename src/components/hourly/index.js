@@ -21,8 +21,7 @@ export default function HourlyComponent(props) {
 				<i className={`wi ${getWeatherIcon(info.icon)}`}></i>
 			</Icon>
 			<Temp>
-				{convertTemp(info.apparentTemperature, celsius)}°
-				{celsius ? 'C' : 'F'}
+				{convertTemp(info.temp, celsius)}°{celsius ? 'C' : 'F'}
 			</Temp>
 		</Card>
 	);

@@ -11,6 +11,8 @@ import {
 	Footer,
 } from './components';
 
+import Jungla from '@jungla/language';
+
 import { LoadedContent, DayList, TopGroup } from './style';
 
 import axios from 'axios';
@@ -34,8 +36,6 @@ function App() {
 	const getData = async () => {
 		let geo = await axios.get(`https://darksky.net/geo?q=${searchValue}`);
 
-		console.log(geo);
-
 		const long = geo.data.longitude;
 		const lat = geo.data.latitude;
 
@@ -43,9 +43,33 @@ function App() {
 			`${corsAnywhere}https://api.darksky.net/forecast/a371aba7516d8ea55de6d6e7fb411308/${lat},${long}`
 		);
 
-		console.log(weather);
+		let finalData = Jungla(
+			`
+		{
+			currently as current {
+				icon
+			},
+			daily {
+				data: [{
+					temperatureMax as tempMax,
+					temperatureMin as tempMin,
+					icon,
+					precipProbability as rainChance,
+					windSpeed
+				}]
+			},
+			hourly {
+				data <12> : [{
+					time,
+					apparentTemperature as temp,
+					icon
+				}]
+			}
+		}`,
+			weather.data
+		);
 
-		setWeatherInfo(weather.data);
+		setWeatherInfo(finalData);
 		setLoaded(true);
 	};
 
@@ -61,28 +85,27 @@ function App() {
 							location={searchValue}
 							celsius={useCelsius}
 							summary={getWeatherSummary(
-								weatherInfo.currently.icon
+								weatherInfo.current.icon
 							)}
-							icon={weatherInfo.currently.icon}
+							icon={weatherInfo.current.icon}
 							temp={convertTemp(
-								weatherInfo.daily.data[0].temperatureMin,
+								weatherInfo.daily.data[0].tempMin,
 								useCelsius
 							)}
 							highTemp={convertTemp(
-								weatherInfo.daily.data[0].temperatureMax,
+								weatherInfo.daily.data[0].tempMax,
 								useCelsius
 							)}
 						/>
 						<Hourly
 							today={{
 								temp: convertTemp(
-									weatherInfo.hourly.data[0]
-										.apparentTemperature,
+									weatherInfo.hourly.data[0].temp,
 									useCelsius
 								),
 								icon: weatherInfo.hourly.data[0].icon,
 							}}
-							data={weatherInfo.hourly.data.slice(0, 12)}
+							data={weatherInfo.hourly.data}
 							celsius={useCelsius}
 						/>
 					</TopGroup>
@@ -91,15 +114,12 @@ function App() {
 						{weatherInfo.daily.data.map((weather, index) => (
 							<Day
 								summary={getWeatherSummary(weather.icon)}
-								temp={convertTemp(
-									weather.temperatureMax,
-									useCelsius
-								)}
+								temp={convertTemp(weather.tempMax, useCelsius)}
 								day={getDay(index)}
 								celsius={useCelsius}
 								icon={weather.icon}
 								celsius={useCelsius}
-								rainChance={weather.precipProbability * 100}
+								rainChance={weather.rainChance * 100}
 								windSpeed={weather.windSpeed}
 							/>
 						))}
